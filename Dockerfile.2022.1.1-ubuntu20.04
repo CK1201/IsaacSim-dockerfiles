@@ -72,24 +72,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 && rm -rf /var/lib/apt/lists/*
 
 ARG VULKAN_SDK_VERSION=1.3.224.1
-# Download the Vulkan SDK and extract the headers, loaders, layers and binary utilities
-RUN wget -q --show-progress \
-    --progress=bar:force:noscroll \
-    https://sdk.lunarg.com/sdk/download/${VULKAN_SDK_VERSION}/linux/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.gz \
-    -O /tmp/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.gz \ 
-    && echo "Installing Vulkan SDK ${VULKAN_SDK_VERSION}" \
-    && mkdir -p /opt/vulkan \
-    && tar -xf /tmp/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.gz -C /opt/vulkan \
-    && mkdir -p /usr/local/include/ && cp -ra /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/include/* /usr/local/include/ \
-    && mkdir -p /usr/local/lib && cp -ra /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/lib/* /usr/local/lib/ \
-    && cp -a /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/lib/libVkLayer_*.so /usr/local/lib \
-    && mkdir -p /usr/local/share/vulkan/explicit_layer.d \
-    && cp /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/etc/vulkan/explicit_layer.d/VkLayer_*.json /usr/local/share/vulkan/explicit_layer.d \
-    && mkdir -p /usr/local/share/vulkan/registry \
-    && cp -a /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/share/vulkan/registry/* /usr/local/share/vulkan/registry \
-    && cp -a /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/bin/* /usr/local/bin \
-    && ldconfig \
-    && rm /tmp/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.gz && rm -rf /opt/vulkan
+# Add LunarG Vulkan repository and install Vulkan SDK
+ARG DEBIAN_FRONTEND=noninteractive
+RUN wget -qO - https://packages.lunarg.com/lunarg-signing-key-pub.asc | apt-key add - && \
+    wget -qO /etc/apt/sources.list.d/lunarg-vulkan-${VULKAN_SDK_VERSION%.*}-focal.list \
+    https://packages.lunarg.com/vulkan/${VULKAN_SDK_VERSION%.*}/lunarg-vulkan-${VULKAN_SDK_VERSION%.*}-focal.list && \
+    apt update && \
+    apt install -y vulkan-sdk && \
+    apt-get -y autoremove && \
+    apt-get clean autoclean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Setup the required capabilities for the container runtime    
 ENV NVIDIA_VISIBLE_DEVICES=all NVIDIA_DRIVER_CAPABILITIES=all
