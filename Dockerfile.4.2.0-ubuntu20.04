@@ -18,16 +18,13 @@
 #
 # Build the image:
 # docker login nvcr.io
+# $oauthtoken
 # docker build --pull -t \
-#   isaac-sim:2023.1.0-ubuntu20.04 \
-#   --build-arg ISAACSIM_VERSION=2023.1.0 \
-#   --build-arg BASE_DIST=ubuntu20.04 \
-#   --build-arg CUDA_VERSION=11.4.2 \
-#   --build-arg VULKAN_SDK_VERSION=1.3.224.1 \
-#   --file Dockerfile.2023.1.0-ubuntu20.04 .
+#   isaac-sim:4.2.0-ubuntu20.04 \
+#   --file Dockerfile.4.2.0-ubuntu20.04 .
 #
 # Run container:
-# docker run --name isaac-sim --entrypoint bash -it --gpus all -e "ACCEPT_EULA=Y" --rm --network=host \
+# docker run --name isaac-sim --entrypoint bash -it --gpus '"device=0,1"' -e "ACCEPT_EULA=Y" --rm --network=host \
 #   -v ~/docker/isaac-sim/cache/kit:/isaac-sim/kit/cache/Kit:rw \
 #   -v ~/docker/isaac-sim/cache/ov:/root/.cache/ov:rw \
 #   -v ~/docker/isaac-sim/cache/pip:/root/.cache/pip:rw \
@@ -36,7 +33,8 @@
 #   -v ~/docker/isaac-sim/logs:/root/.nvidia-omniverse/logs:rw \
 #   -v ~/docker/isaac-sim/data:/root/.local/share/ov/data:rw \
 #   -v ~/docker/isaac-sim/documents:/root/Documents:rw \
-# 	isaac-sim:2023.1.0-ubuntu20.04 \
+#   -v /usr/share/nvidia/nvoptix.bin:/usr/share/nvidia/nvoptix.bin \
+# 	isaac-sim:4.2.0-ubuntu20.04 \
 # 	./runheadless.native.sh
 #
 # More info:
@@ -51,7 +49,7 @@ ARG ISAACSIM_VERSION=4.2.0
 FROM nvcr.io/nvidia/isaac-sim:${ISAACSIM_VERSION} as isaac-sim
 
 # https://catalog.ngc.nvidia.com/orgs/nvidia/containers/cudagl
-FROM nvidia/cudagl:${CUDA_VERSION}-base-${BASE_DIST}
+FROM nvidia/cudagl:${CUDA_VERSION}-runtime-${BASE_DIST}
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libatomic1 \
@@ -72,7 +70,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 && apt-get clean autoclean \
 && rm -rf /var/lib/apt/lists/*
 
-ARG VULKAN_SDK_VERSION=1.3.224.1
+# ARG VULKAN_SDK_VERSION=1.3.224.1
+ARG VULKAN_SDK_VERSION=1.3.243.0
 # Add LunarG Vulkan repository and install Vulkan SDK
 ARG DEBIAN_FRONTEND=noninteractive
 RUN wget -qO - https://packages.lunarg.com/lunarg-signing-key-pub.asc | apt-key add - && \
@@ -118,4 +117,4 @@ WORKDIR /isaac-sim
 RUN ln -s exts/omni.isaac.examples/omni/isaac/examples extension_examples
 
 # Default entrypoint to launch headless with streaming
-ENTRYPOINT /isaac-sim/runheadless.native.sh
+ENTRYPOINT /isaac-sim/runheadless.webrtc.sh
