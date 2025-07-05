@@ -17,9 +17,8 @@ Clone this repository and then build the image:
 ```bash
 docker login nvcr.io
 docker build --pull -t \
-  isaac-sim:2023.1.0-ubuntu22.04 \
-  --build-arg ISAACSIM_VERSION=2023.1.0 \
-  --file Dockerfile.2023.1.0-ubuntu22.04 .
+  isaac-sim:4.2.0-ubuntu20.04 \
+  --file Dockerfile.4.2.0-ubuntu20.04 .
 ```
 
 ## Usage
